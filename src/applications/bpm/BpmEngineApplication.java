@@ -91,7 +91,7 @@ public class BpmEngineApplication extends Application {
 
     private void handleOperationMessage(Message msg) {
         SimMessage simMsg = (SimMessage) msg.getProperty(PROPERTY_PROCESS_MSG);
-        simMsg.variables.put("remote_address", msg.getFrom().getAddress()); // TODO: mention in docs
+        simMsg.variables.put("last_msg_source_address", msg.getFrom().getAddress());
 
         log.debug("[BPH-"+ mHost + "] Received : "+ simMsg);
 

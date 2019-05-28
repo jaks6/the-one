@@ -13,7 +13,7 @@ import static report.BpmAppReporter.*;
 import static report.FogReport.FOG_ACTIVITY_STARTED;
 
 
-class BpmEventListener implements FlowableEventListener  {
+class BpmEventListener implements FlowableEventListener {
 
     private final Application application;
     private final DTNHost host;
@@ -64,7 +64,9 @@ class BpmEventListener implements FlowableEventListener  {
         }
 
 
-        else if (type.equals(FlowableEngineEventType.ENTITY_DELETED)){
+        else if (type.equals(FlowableEngineEventType.ENTITY_CREATED)){
+            application.sendEventToListeners(ENTITY_CREATED, null, host);
+        }        else if (type.equals(FlowableEngineEventType.ENTITY_DELETED)){
             application.sendEventToListeners(ENTITY_DELETED, null, host);
         }
 

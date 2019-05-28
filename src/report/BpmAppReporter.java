@@ -32,6 +32,7 @@ public class BpmAppReporter extends Report implements ApplicationListener {
     public static final String RECEIVED_MESSAGE = "receivedBpmMessage";
     public static final String RECEIVED_SIGNAL_NEARBY = "signalNearbyDevice";
     public static final String ENTITY_DELETED = "entityDeleted";
+    public static final String ENTITY_CREATED = "entityCreated";
 
     HashMap<String, Integer> statsMap;
     HashMap<String, Integer> hostStatsMap;
@@ -67,6 +68,7 @@ public class BpmAppReporter extends Report implements ApplicationListener {
 
 			"\nActivities started: " + this.statsMap.get(ACTIVITY_STARTED)+
 			"\nActivities completed: " + this.statsMap.get(ACTIVITY_COMPLETED)+
+			"\nActivities cancelled: " + this.statsMap.get(ACTIVITY_CANCELLED)+
 
             "\nMessages sent: " + this.statsMap.get(SENT_MESSAGE)+
 			"\nMessages received: " + this.statsMap.get(RECEIVED_MESSAGE)+
@@ -74,8 +76,9 @@ public class BpmAppReporter extends Report implements ApplicationListener {
             "\nTasks created: " + this.statsMap.get(TASK_CREATED)+
             "\nTasks completed: " + this.statsMap.get(TASK_COMPLETED)+
 
-            "\nSignals received: " + this.statsMap.get(RECEIVED_SIGNAL_NEARBY) +
-            "\nEntities deelted: " + this.statsMap.get(ENTITY_DELETED)
+            "\n'Nearby' Signals received: " + this.statsMap.get(RECEIVED_SIGNAL_NEARBY) +
+            "\nEntities created: " + this.statsMap.get(ENTITY_CREATED) +
+            "\nEntities deleted: " + this.statsMap.get(ENTITY_DELETED)
 
                 ;
 
