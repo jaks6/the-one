@@ -4,26 +4,29 @@
  */
 package gui.playfield;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
-import core.Connection;
-import core.Coord;
-import core.DTNHost;
-import core.NetworkInterface;
+import core.*;
 
 /**
  * Visualization of a DTN Node
  *
  */
 public class NodeGraphic extends PlayFieldGraphic {
+	public static final BasicStroke PATH_STROKE = new BasicStroke(1.5f);
+	public static final BasicStroke STROKE_DASHED = new BasicStroke(3.0f, BasicStroke.CAP_SQUARE,
+            BasicStroke.JOIN_MITER, 10.0f, new float[]{10.0f}, 0.0f);
 	private static boolean drawCoverage;
 	private static boolean drawNodeName;
 	private static boolean drawConnections;
 	private static boolean drawBuffer;
+
+	private static boolean drawPaths = true;
+
 	private static List<DTNHost> highlightedNodes;
 
 	private static Color rangeColor = Color.GREEN;
@@ -37,6 +40,7 @@ public class NodeGraphic extends PlayFieldGraphic {
 	private static Color highlightedNodeColor = Color.MAGENTA;
 
 	private DTNHost node;
+	private static List<Color> hostColorList;
 
 	public NodeGraphic(DTNHost node) {
 		this.node = node;
@@ -109,7 +113,7 @@ public class NodeGraphic extends PlayFieldGraphic {
 		/* draw node rectangle */
 		g2.setColor(hostColor);
 		g2.drawRect(scale(loc.getX()-1),scale(loc.getY()-1),
-		scale(2),scale(2));
+				scale(2),scale(2));
 
 		if (isHighlighted()) {
 			g2.setColor(highlightedNodeColor);
@@ -122,6 +126,58 @@ public class NodeGraphic extends PlayFieldGraphic {
 			g2.drawString(node.toString(), scale(loc.getX()),
 					scale(loc.getY()));
 		}
+
+		if (drawPaths && node.getName().startsWith("p")) {
+
+			g2.setColor(getHostColor(node));
+
+			g2.setStroke(PATH_STROKE);
+
+			Coord c1 = node.getLocation();
+			if (node.getPath() == null) return;
+
+			List<Coord> coords = node.getPath().getCoords();
+			Coord destination = node.getDestination();
+			int start_i = coords.indexOf(destination);
+			g2.drawLine(scale(c1.getX()), scale(c1.getY()),
+					scale(destination.getX()), scale(destination.getY()));
+
+
+			// create a copy to prevent concurrent modification exceptions
+			for (int i = start_i; i < coords.size()-1; i++) {
+
+				c1 = coords.get(i);
+				Coord c2 = coords.get(i+1);
+
+				g2.drawLine(scale(c1.getX()), scale(c1.getY()),
+						scale(c2.getX()), scale(c2.getY()));
+			}
+			g2.setStroke(new BasicStroke());
+			g2.setColor(Color.BLACK); // reset?
+		}
+	}
+
+
+	private Color getHostColor(DTNHost node) {
+		if (hostColorList == null){
+			hostColorList = generateHostColors();
+		}
+		return hostColorList.get(node.getAddress());
+	}
+
+	private List<Color> generateHostColors() {
+		ArrayList<Color> colors = new ArrayList<>();
+		int totalColors = SimScenario.getInstance().getHosts().size();
+		Random r = new Random();
+		for (int i = 0; i < totalColors; i++) {
+			float hue = (float) i / totalColors;
+
+			colors.add( new Color(Color.HSBtoRGB( hue,
+					0.9f + r.nextFloat() / 10,
+					0.7f  + r.nextFloat() / 10)));
+
+		}
+		return colors;
 	}
 
 	/**
@@ -154,6 +210,10 @@ public class NodeGraphic extends PlayFieldGraphic {
 	 */
 	public static void setDrawBuffer(boolean draw) {
 		drawBuffer = draw;
+	}
+
+	public static void setDrawPaths(boolean selected) {
+		drawPaths = selected;
 	}
 
 	public static void setHighlightedNodes(List<DTNHost> nodes) {

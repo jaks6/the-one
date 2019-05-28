@@ -53,6 +53,7 @@ public class SimMenuBar extends JMenuBar implements ActionListener {
 	private JCheckBoxMenuItem showNodeCoverage;
 	private JCheckBoxMenuItem showNodeConnections;
 	private JCheckBoxMenuItem showBuffer;
+	private JCheckBoxMenuItem showPaths;
 
 	private JCheckBoxMenuItem enableMapGraphic;
 	private JCheckBoxMenuItem autoClearOverlay;
@@ -66,6 +67,7 @@ public class SimMenuBar extends JMenuBar implements ActionListener {
 	private PlayField field;
 	private NodeChooser chooser;
 
+	private static final String SHOW_PATH_S = "showNodePaths";
 	/** Show node name string -setting id ({@value})*/
 	public static final String SHOW_NODE_NAMESTR_S = "showNodeNameStrings";
 	/** Show node radio coverage -setting id ({@value})*/
@@ -95,7 +97,8 @@ public class SimMenuBar extends JMenuBar implements ActionListener {
 		if (settings.contains("fileName")) {
 			// create underlay image menu item only if filename is specified
 			enableBgImage = createCheckItem(pfMenu,"Show underlay image",
-					false, null);
+					true, null);
+			toggleUnderlayImage();
 		}
 
 		settings.setNameSpace(gui.MainWindow.GUI_NS);
@@ -108,6 +111,8 @@ public class SimMenuBar extends JMenuBar implements ActionListener {
 				"Show node connections", true, SHOW_CONNECTIONS_S);
 		showBuffer = createCheckItem(pfMenu,
 				"Show message buffer", true, SHOW_BUFFER_S);
+		showPaths = createCheckItem(pfMenu,
+				"Show node paths", true, SHOW_PATH_S);
 		focusOnClick = createCheckItem(pfMenu,
 				"Focus to closest node on mouse click", false,FOCUS_ON_CLICK_S);
 
@@ -172,6 +177,7 @@ public class SimMenuBar extends JMenuBar implements ActionListener {
 		NodeGraphic.setDrawNodeName(showNodeName.isSelected());
 		NodeGraphic.setDrawCoverage(showNodeCoverage.isSelected());
 		NodeGraphic.setDrawConnections(showNodeConnections.isSelected());
+		NodeGraphic.setDrawPaths(showPaths.isSelected());
 		NodeGraphic.setDrawBuffer(showBuffer.isSelected());
 		field.setShowMapGraphic(enableMapGraphic.isSelected());
 		field.setAutoClearOverlay(autoClearOverlay.isSelected());
@@ -190,6 +196,7 @@ public class SimMenuBar extends JMenuBar implements ActionListener {
 		}
 		else if (source == this.showNodeName ||
 				source == this.showNodeCoverage ||
+				source == this.showPaths ||
 				source == this.showNodeConnections ||
 				source == this.enableMapGraphic ||
 				source == this.autoClearOverlay ||
