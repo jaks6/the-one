@@ -151,6 +151,10 @@ public class DTNHost implements Comparable<DTNHost> {
 		return this.address;
 	}
 
+	public String getName() {
+		return this.name;
+	}
+
 	/**
 	 * Returns this hosts's ModuleCommunicationBus
 	 * @return this hosts's ModuleCommunicationBus
@@ -192,6 +196,14 @@ public class DTNHost implements Comparable<DTNHost> {
 	 */
 	public Coord getLocation() {
 		return this.location;
+	}
+
+	/**
+	 * Returns the current destination of this host. (this is not the final destination..)
+	 * @return The destination of current movement line segment
+	 */
+	public Coord getDestination() {
+		return this.destination;
 	}
 
 	/**
