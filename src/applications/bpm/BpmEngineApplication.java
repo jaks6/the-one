@@ -221,7 +221,12 @@ public class BpmEngineApplication extends Application {
 
     public void handleAutostartProcesses() {
         for (int i = 0; i < AUTO_STARTED_PROCESSES.length; i++) {
-            engine.startProcessInstance(AUTO_STARTED_PROCESSES[i], AUTOSTARTED_PROCESS_VARS[i]);
+            HashMap<String, Object> processVariables = AUTOSTARTED_PROCESS_VARS[i];
+            if (processVariables != null){
+                engine.startProcessInstance(AUTO_STARTED_PROCESSES[i], processVariables);
+            } else {
+                engine.startProcessInstance(AUTO_STARTED_PROCESSES[i]);
+            }
         }
     }
 
