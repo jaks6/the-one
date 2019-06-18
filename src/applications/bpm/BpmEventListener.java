@@ -8,12 +8,22 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.flowable.engine.common.api.delegate.event.*;
 import org.flowable.engine.delegate.event.FlowableActivityEvent;
 import org.flowable.engine.delegate.event.FlowableCancelledEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static report.BpmAppReporter.*;
 import static report.FogReport.FOG_ACTIVITY_STARTED;
 
 
 class BpmEventListener implements FlowableEventListener {
+    Logger log = LoggerFactory.getLogger(this.getClass());
+
+    void logEvent(DTNHost host, FlowableEngineEvent engineEvent){ logEvent(host,engineEvent,""); }
+    void logEvent(DTNHost host, FlowableEngineEvent engineEvent, String msg){
+
+        log.debug(String.format("%s[h:%s]\t[%s/%s]\t\t%s : %s",
+                SimClock.getIntTime(), host.getName(), engineEvent.getProcessDefinitionId(), engineEvent.getProcessInstanceId(), engineEvent.getType().name(), msg));
+    }
 
     private final Application application;
     private final DTNHost host;
@@ -32,9 +42,10 @@ class BpmEventListener implements FlowableEventListener {
         if (type.equals(FlowableEngineEventType.JOB_EXECUTION_SUCCESS)) {
 
         } else if (type.equals(FlowableEngineEventType.PROCESS_STARTED)){
-
+            logEvent(host, engineEvent);
             application.sendEventToListeners(PROCESS_STARTED, pair, host);
         } else if (type.equals(FlowableEngineEventType.PROCESS_COMPLETED)){
+            logEvent(host, engineEvent);
             application.sendEventToListeners(PROCESS_COMPLETED, pair, host);
         } else if (type.equals(FlowableEngineEventType.PROCESS_CANCELLED)){
             String cause = (String) ((FlowableCancelledEvent) event).getCause();
@@ -43,14 +54,21 @@ class BpmEventListener implements FlowableEventListener {
 
         }
 
+
+
         else if (type.equals(FlowableEngineEventType.ACTIVITY_STARTED)){
             application.sendEventToListeners(ACTIVITY_STARTED, null, host);
             String activityId = ((FlowableActivityEvent) event).getActivityId();
+            logEvent(host, engineEvent, activityId);
+
             if (activityId.equals("offloadTask") ||  activityId.equals("localProcessingTask")) {
                 application.sendEventToListeners(FOG_ACTIVITY_STARTED, pair, host);
             }
 
         } else if (type.equals(FlowableEngineEventType.ACTIVITY_COMPLETED)){
+            String activityId = ((FlowableActivityEvent) event).getActivityId();
+
+            logEvent(host, engineEvent, activityId);
             application.sendEventToListeners(ACTIVITY_COMPLETED, null, host);
         } else if (type.equals(FlowableEngineEventType.ACTIVITY_CANCELLED)){
             application.sendEventToListeners(ACTIVITY_CANCELLED, null, host);
