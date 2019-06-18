@@ -7,6 +7,7 @@ import ee.mass.epm.sim.SimMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import report.BpmAppReporter;
+import routing.ActiveRouter;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -56,6 +57,7 @@ public class BpmEngineApplication extends Application {
     SimulationApplicationEngine engine;
     private boolean firstUpdate = true;
     DTNHost mHost;
+    private boolean energyTrackingEnabled;
 
     @Override
     public Message handle(Message msg, DTNHost host) {
@@ -183,7 +185,9 @@ public class BpmEngineApplication extends Application {
             //make engine work on running tasks
             int workDone = engine.update();
 
-            updateEnergy(host, workDone);
+            if (energyTrackingEnabled){
+                updateEnergy(host, workDone);
+            }
         }
 
         //take some messages and send them out
@@ -205,6 +209,8 @@ public class BpmEngineApplication extends Application {
         NewConnectionListener.getInstance(); //TODO: can we move it to prototype initialization?
         firstUpdate = false;
         mHost = host;
+
+        energyTrackingEnabled = ((ActiveRouter) host.getRouter()).getEnergy() != null;
 
         SimScenario.getInstance().addMovementListener(new BpmMovementListener(this));
         SimScenario.getInstance().addMessageListener(new BpmMessageListener(host, engine));

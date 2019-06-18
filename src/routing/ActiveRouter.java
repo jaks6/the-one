@@ -647,6 +647,10 @@ public abstract class ActiveRouter extends MessageRouter {
 	 */
 	protected void transferDone(Connection con) { }
 
+	public EnergyModel getEnergy() {
+		return energy;
+	}
+
 	@Override
 	public RoutingInfo getRoutingInfo() {
 		RoutingInfo top = super.getRoutingInfo();
