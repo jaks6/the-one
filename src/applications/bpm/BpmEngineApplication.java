@@ -172,7 +172,7 @@ public class BpmEngineApplication extends Application {
         this.AUTO_DEPLOYED_PROCESSES = e.AUTO_DEPLOYED_PROCESSES;
         this.AUTO_STARTED_PROCESSES = e.AUTO_STARTED_PROCESSES;
         this.AUTOSTARTED_PROCESS_VARS = e.AUTOSTARTED_PROCESS_VARS;
-        this.engine = new Engine(String.valueOf(BpmEngineApplication.appIdCounter));
+        this.engine = new Engine(String.valueOf(BpmEngineApplication.appIdCounter), OneSimClock.getInstance());
         BpmEngineApplication.appIdCounter++;
     }
 

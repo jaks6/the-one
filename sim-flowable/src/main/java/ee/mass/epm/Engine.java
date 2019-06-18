@@ -6,6 +6,7 @@ import org.flowable.engine.*;
 import org.flowable.engine.common.api.delegate.event.FlowableEvent;
 import org.flowable.engine.common.api.delegate.event.FlowableEventListener;
 import org.flowable.engine.common.api.delegate.event.FlowableEventType;
+import org.flowable.engine.common.impl.runtime.Clock;
 import org.flowable.engine.common.impl.history.HistoryLevel;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.slf4j.Logger;
@@ -33,20 +34,33 @@ public class Engine implements SimulationApplicationEngine {
     Logger log = LoggerFactory.getLogger(this.getClass());
 
 
+    public Engine(String uniqueID, Clock clock) {
+        this.hostAddress = hostAddress;
+        this.init(uniqueID, clock);
+    }
+
     public Engine(String uniqueID) {
-        this.init(uniqueID);
+        this.hostAddress = hostAddress;
+        this.init(uniqueID, null);
     }
 
 
 
-    public void init(String uniqueID) {
+    public void init(String uniqueID, Clock clock) {
         //TODO: verify db conf (in-memory needed?)
         ProcessEngineConfiguration cfg = new SimulatedProcessEngineConfiguration()
                 .setJdbcUrl("jdbc:h2:mem:flowable"+uniqueID+";DB_CLOSE_DELAY=-1")
 //                .setJdbcUsername("sa")
 //                .setJdbcPassword("")
 //                .setJdbcDriver("org.h2.Driver")
+//                .setBusinessCalendarManager(getOneSimulatorCalendarManager())
+//                .setAsyncExecutorActivate(true)
+
                 .setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
+
+        if (clock != null){
+            cfg.setClock(clock);
+        }
 
         //TODO: consider ProcessEngineConfiguration.createStandaloneInMemProcessEngineConfiguration().buildProcessEngine();
         cfg.setHistory(HistoryLevel.NONE.getKey())
@@ -217,6 +231,9 @@ public class Engine implements SimulationApplicationEngine {
     /** Returns how much work was done during this update */
     @Override
     public int update() {
+
+        ((SimulatedProcessEngineConfiguration)processEngine.getProcessEngineConfiguration()).doTimerUpdate();
+
         return simulatedWorkQueue.doWork();
     }
 
