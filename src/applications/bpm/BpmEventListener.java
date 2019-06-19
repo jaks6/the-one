@@ -71,6 +71,10 @@ class BpmEventListener implements FlowableEventListener {
             logEvent(host, engineEvent, activityId);
             application.sendEventToListeners(ACTIVITY_COMPLETED, null, host);
         } else if (type.equals(FlowableEngineEventType.ACTIVITY_CANCELLED)){
+            String activityId = ((FlowableActivityEvent) event).getActivityId();
+            String executionId = ((FlowableActivityEvent) event).getExecutionId();
+
+            ((BpmEngineApplication)application).engine.activityCancelled(executionId); //Todo: move this to a better place
             application.sendEventToListeners(ACTIVITY_CANCELLED, null, host);
 
         }

@@ -71,26 +71,33 @@ public class SimulatedWorkQueue {
 
 
         for (Execution execution : list) {
-            JobHandle job;
-            //Go through registeredTask list
-            for( Iterator<JobHandle> i = registeredTasks.iterator(); i.hasNext();) {
-                job = i.next();
-
-                if (job.getExecutionId().equals(execution.getId())){
-//                    System.out.println("Removed job of processInstanceId = [" + processInstanceId + "]");
-                    i.remove();
-                }
-
-            }
-            //Go through activeJobs list
-            for( Iterator<JobHandle> j = activeJobs.iterator(); j.hasNext();) {
-                job = j.next();
-                if (job.getExecutionId().equals(execution.getId())){
-//                    System.out.println("Removed job of processInstanceId = [" + processInstanceId + "]");
-                    j.remove();
-                }
-            }
+            removeExecutionFromJobs(execution.getId());
         }
 
+    }
+
+    private void removeExecutionFromJobs(String executionId) {
+        JobHandle job;
+        //Go through registeredTask list
+        for(Iterator<JobHandle> i = registeredTasks.iterator(); i.hasNext();) {
+            job = i.next();
+
+            if (job.getExecutionId().equals(executionId)){
+//                    System.out.println("Removed job of processInstanceId = [" + processInstanceId + "]");
+                i.remove();
+            }
+        }
+        //Go through activeJobs list
+        for( Iterator<JobHandle> j = activeJobs.iterator(); j.hasNext();) {
+            job = j.next();
+            if (job.getExecutionId().equals(executionId)){
+//                    System.out.println("Removed job of processInstanceId = [" + processInstanceId + "]");
+                j.remove();
+            }
+        }
+    }
+
+    public void cancelJob(String executionId) {
+            removeExecutionFromJobs(executionId);
     }
 }

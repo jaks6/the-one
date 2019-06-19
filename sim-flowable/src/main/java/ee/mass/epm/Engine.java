@@ -208,6 +208,11 @@ public class Engine implements SimulationApplicationEngine {
     }
 
     @Override
+    public void activityCancelled(String executionId) {
+        simulatedWorkQueue.cancelJob(executionId);
+    }
+
+    @Override
     public void cancelRunningInstances() {
         int count = 0;
         runtimeService.createProcessInstanceQuery().active().list()

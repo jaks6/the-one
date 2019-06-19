@@ -80,4 +80,5 @@ public interface SimulationApplicationEngine {
     int update();
 
 
+    void activityCancelled(String executionId);
 }
