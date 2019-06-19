@@ -1,26 +1,27 @@
 package ee.mass.epm;
 
-import ee.mass.epm.sim.SimMessage;
 import ee.mass.epm.sim.SimulatedWorkQueue;
+import ee.mass.epm.sim.message.EngineMessageContent;
+import ee.mass.epm.sim.message.SimMessage;
 import org.flowable.engine.*;
 import org.flowable.engine.common.api.delegate.event.FlowableEvent;
 import org.flowable.engine.common.api.delegate.event.FlowableEventListener;
 import org.flowable.engine.common.api.delegate.event.FlowableEventType;
 import org.flowable.engine.common.impl.runtime.Clock;
 import org.flowable.engine.common.impl.history.HistoryLevel;
+import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 public class Engine implements SimulationApplicationEngine {
 
 
+    public static final String LOCALHOST_VAR = "localhost";
+    private int hostAddress;
     private ProcessEngine processEngine;
     private TaskService taskService;
     RepositoryService repositoryService;
@@ -35,12 +36,10 @@ public class Engine implements SimulationApplicationEngine {
 
 
     public Engine(String uniqueID, Clock clock) {
-        this.hostAddress = hostAddress;
         this.init(uniqueID, clock);
     }
 
     public Engine(String uniqueID) {
-        this.hostAddress = hostAddress;
         this.init(uniqueID, null);
     }
 
@@ -53,7 +52,6 @@ public class Engine implements SimulationApplicationEngine {
 //                .setJdbcUsername("sa")
 //                .setJdbcPassword("")
 //                .setJdbcDriver("org.h2.Driver")
-//                .setBusinessCalendarManager(getOneSimulatorCalendarManager())
 //                .setAsyncExecutorActivate(true)
 
                 .setDatabaseSchemaUpdate(ProcessEngineConfiguration.DB_SCHEMA_UPDATE_TRUE);
@@ -66,8 +64,6 @@ public class Engine implements SimulationApplicationEngine {
         cfg.setHistory(HistoryLevel.NONE.getKey())
                 .setCreateDiagramOnDeploy(false)
                 .setEnableProcessDefinitionHistoryLevel(false);
-
-
 
 
         processEngine = cfg.buildProcessEngine();
@@ -90,8 +86,31 @@ public class Engine implements SimulationApplicationEngine {
     public Set<FogMessageRequest> getFogMessageRequests() { return fogMessageRequests; }
 
     @Override
+    public int getHostAddress() {
+        return hostAddress;
+    }
+
+    @Override
+    public void setHostAddress(int host){
+        this.hostAddress = host;
+    }
+
+    @Override
     public ProcessInstance startProcessInstanceWithMessage(SimMessage msg) {
-        return runtimeService.startProcessInstanceByMessage(msg.name, msg.variables);
+        Map<String, Object> processVariables = ((EngineMessageContent) msg.getContent()).variables;
+        processVariables.put(LOCALHOST_VAR, hostAddress);
+        return runtimeService.startProcessInstanceByMessage(msg.name, processVariables);
+    }
+
+    @Override
+    public ProcessInstance startProcessInstance(String processKey) {
+        return this.startProcessInstance(processKey, new HashMap<>());
+    }
+
+    @Override
+    public ProcessInstance startProcessInstance(String processKey, Map<String, Object> processVariables) {
+        processVariables.put(LOCALHOST_VAR, hostAddress);
+        return runtimeService.startProcessInstanceByKey(processKey, processVariables);
     }
 
     public void event(String name){
@@ -108,25 +127,17 @@ public class Engine implements SimulationApplicationEngine {
         runtimeService.addEventListener(listener);
     }
 
-    @Override
-    public ProcessInstance startProcessInstance(String processKey) {
-        return runtimeService.startProcessInstanceByKey(processKey);
-    }
 
-    @Override
-    public ProcessInstance startProcessInstance(String processKey, Map<String, Object> processVariables) {
-        return runtimeService.startProcessInstanceByKey(processKey, processVariables);
-    }
 
     @Override
     public void message(String msgName, String executionId) {
-        log.debug("received msgName = [" + msgName + "], destinationExecutionid = [" + executionId + "]");
+        log.debug("received msgName = [" + msgName + "], destinationProcessInstanceId = [" + executionId + "]");
         runtimeService.messageEventReceived(msgName, executionId);
     }
 
     @Override
     public void message(String msgName, String executionId, Map<String, Object> processVariables) {
-        log.debug("received msgName = [" + msgName + "], destinationExecutionid = [" + executionId + "], processVariables = [" + processVariables + "]");
+        log.debug("received msgName = [" + msgName + "], destinationProcessInstanceId = [" + executionId + "], processVariables = [" + processVariables + "]");
         if (doesExecutionExist(executionId))
             runtimeService.messageEventReceived(msgName, executionId, processVariables);
         else
@@ -135,10 +146,32 @@ public class Engine implements SimulationApplicationEngine {
 
     @Override
     public void message(SimMessage msg){
-        if (doesExecutionExist(msg.destinationExecutionid))
-            runtimeService.messageEventReceived(msg.name, msg.destinationExecutionid, msg.variables);
-        else
-            log.debug("A Message was dropped because the execution does not exist");
+        EngineMessageContent msgContent = (EngineMessageContent) msg.getContent();
+
+        Execution execution;
+        if (msgContent.destinationProcessInstanceId != null){
+            execution = getMessageExecutionForProcess(msg.name, msgContent.destinationProcessInstanceId);
+        } else {
+            execution =  getMessageListenerExecutionsByName(msg.name);
+        }
+        if (execution == null){
+            log.warn("A message was dropped because the specified destinationExecutionId does not have a corresponding message subscription!");
+        } else {
+            runtimeService.messageEventReceived(msg.name, execution.getId(), msgContent.variables);
+        }
+
+//        if (doesExecutionExist(msgContent.destinationProcessInstanceId))
+//            runtimeService.messageEventReceived(msg.name, msgContent.destinationProcessInstanceId, msgContent.variables);
+//        else
+//            log.debug("A Message was dropped because the execution does not exist");
+    }
+
+    private Execution getMessageListenerExecutionsByName(String name){
+        return runtimeService.createExecutionQuery().messageEventSubscriptionName(name).singleResult();
+    }
+
+    private Execution getMessageExecutionForProcess(String name, String processId){
+        return runtimeService.createExecutionQuery().messageEventSubscriptionName(name).rootProcessInstanceId(processId).singleResult();
     }
 
     private boolean doesExecutionExist(String executionId){
@@ -166,9 +199,13 @@ public class Engine implements SimulationApplicationEngine {
 
     /** Used to notify the original process that a send message task was succesfully received at the other end*/
     @Override
-    public void notifyMessageTransferred(SimMessage m) {
-        if (runtimeService.createExecutionQuery().executionId(m.srcExecutionId).count() > 0)
-            runtimeService.trigger(m.srcExecutionId);
+    public void notifyMessageTransferred(SimMessage msg) {
+        if (msg.srcExecutionId == null) {
+            log.warn("Tried to notify message transffered but srcExecutionId was null!");
+            return;
+        }
+        if (runtimeService.createExecutionQuery().executionId(msg.srcExecutionId).count() > 0)
+            runtimeService.trigger(msg.srcExecutionId);
         else
             log.debug("A Message transfer notification was dropped because the execution no longer exists");
     }
@@ -182,16 +219,6 @@ public class Engine implements SimulationApplicationEngine {
     @Override
     public void deploy(String name, InputStream inputStream){
         repositoryService.createDeployment().addInputStream(name, inputStream).deploy();
-    }
-
-    @Override
-    public void deploy(String definitionResource) {
-        if (repositoryService == null){
-            log.error("repositoryService null!");
-            return;
-        }
-
-        repositoryService.createDeployment().addClasspathResource(definitionResource).deploy();
     }
 
     public EngineStats getStats(){

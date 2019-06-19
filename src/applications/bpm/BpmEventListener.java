@@ -58,6 +58,8 @@ class BpmEventListener implements FlowableEventListener {
 
         else if (type.equals(FlowableEngineEventType.ACTIVITY_STARTED)){
             application.sendEventToListeners(ACTIVITY_STARTED, null, host);
+
+            //TODO: try to share activityId between events for shorter code?
             String activityId = ((FlowableActivityEvent) event).getActivityId();
             logEvent(host, engineEvent, activityId);
 
@@ -76,6 +78,7 @@ class BpmEventListener implements FlowableEventListener {
 
             ((BpmEngineApplication)application).engine.activityCancelled(executionId); //Todo: move this to a better place
             application.sendEventToListeners(ACTIVITY_CANCELLED, null, host);
+            logEvent(host, engineEvent, activityId);
 
         }
 

@@ -17,37 +17,24 @@ import org.slf4j.LoggerFactory;
 public class SimulatedTask  extends ServiceTask implements TriggerableActivityBehavior {
 
     Expression jobSize;
-    Expression jobSizeProcessVariable;
     Logger log = LoggerFactory.getLogger(this.getClass());
 
 
     @Override
     public void execute(DelegateExecution execution) {
 
-
         SimulatedProcessEngineConfiguration engine = (SimulatedProcessEngineConfiguration) Context.getProcessEngineConfiguration();
 
-//        int jobsize = (int) execution.getVariable(
-//                PROCESS_VARIABLE_KEY_PREFIX + execution.getCurrentActivityId());
         int jobsize = 0;
         if (jobSize != null){
             jobsize = Integer.parseInt( (String) jobSize.getValue(execution) );
 
         }
-        if (jobSizeProcessVariable != null){
-            if (jobSize == null){
-                log.debug("set jobSize from process variable");
-                jobsize = Integer.parseInt((String) execution.getVariable(jobSizeProcessVariable.getExpressionText()));
-            } else {
-                log.info("Using extensionField 'jobSize' instead of 'jobSizeProcessVariable', as both have been set");
 
-            }
-        }
         JobHandle handle = engine.getSimulatedWorkQueue().addJob(execution.getId(), jobsize);
 
 //        System.out.println("Simulated Task created, Job Handle: [" + handle + "]");
         log.debug("started execution = [" + execution + "], jobSize =" + jobsize);
-
     }
 
 

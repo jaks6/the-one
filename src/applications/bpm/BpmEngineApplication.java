@@ -3,7 +3,9 @@ package applications.bpm;
 import core.*;
 import ee.mass.epm.Engine;
 import ee.mass.epm.SimulationApplicationEngine;
-import ee.mass.epm.sim.SimMessage;
+import ee.mass.epm.sim.message.DeployMessageContent;
+import ee.mass.epm.sim.message.EngineMessageContent;
+import ee.mass.epm.sim.message.SimMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import report.BpmAppReporter;
@@ -11,6 +13,9 @@ import routing.ActiveRouter;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -55,7 +60,7 @@ public class BpmEngineApplication extends Application {
     Logger log = LoggerFactory.getLogger(this.getClass());
 
     SimulationApplicationEngine engine;
-    private boolean firstUpdate = true;
+    boolean firstUpdate = true;
     DTNHost mHost;
     private boolean energyTrackingEnabled;
 
@@ -93,14 +98,33 @@ public class BpmEngineApplication extends Application {
 
     private void handleOperationMessage(Message msg) {
         SimMessage simMsg = (SimMessage) msg.getProperty(PROPERTY_PROCESS_MSG);
-        simMsg.variables.put("last_msg_source_address", msg.getFrom().getAddress());
 
         log.debug("[BPH-"+ mHost + "] Received : "+ simMsg);
 
-        if (simMsg.isForStartEvent){
-            engine.startProcessInstanceWithMessage(simMsg);
-        } else {
-            engine.message(simMsg);
+
+        switch (simMsg.getContent().getMessageContentType()){
+            case ENGINE_MSG:
+                EngineMessageContent eMsgContent = (EngineMessageContent) simMsg.getContent();
+                eMsgContent.variables.put("last_msg_source_address", msg.getFrom().getAddress());
+                if (eMsgContent.isForStartEvent){
+                    eMsgContent.variables.put("startMessageSenderAddress", msg.getFrom().getAddress());
+                    engine.startProcessInstanceWithMessage(simMsg);
+                } else {
+                    engine.message(simMsg);
+                }
+                break;
+
+            case DEPLOY_MSG:
+                DeployMessageContent pMsgContent  = (DeployMessageContent) simMsg.getContent();
+                InputStream inputStream = null;
+
+                try {
+                    inputStream = Files.newInputStream(Paths.get(pMsgContent.resourcePath));
+                } catch (IOException e) {
+                    log.error(e.getMessage());
+                }
+                engine.deploy(simMsg.name+".bpmn20.xml", inputStream);
+                break;
         }
     }
 
@@ -216,6 +240,7 @@ public class BpmEngineApplication extends Application {
         SimScenario.getInstance().addMessageListener(new BpmMessageListener(host, engine));
         this.engine.addEngineEventsListener(new BpmEventListener(mHost, this));
 
+        engine.setHostAddress(host.getAddress());
         deployProcesses(host);
 
         handleAutostartProcesses();
@@ -248,13 +273,19 @@ public class BpmEngineApplication extends Application {
     }
 
     private void handleOutgoingMessages(DTNHost host) {
-        for(Iterator<SimMessage> i = engine.getPendingOutgoingMessages().iterator(); i.hasNext();) {
+        for (Iterator<SimMessage> i = engine.getPendingOutgoingMessages().iterator(); i.hasNext();) {
 
             SimMessage simMessage = i.next();
 
             Message m = messageFromBpm(host, simMessage);
-            host.createNewMessage(m);
 
+            if (simMessage.destinationAddress == host.getAddress()){
+                // Special case where the processes within one hosts enigne are exchanging messages
+                engine.notifyMessageTransferred(simMessage);
+                handleBpmMessage(m, host);
+            } else {
+                host.createNewMessage(m);
+            }
             i.remove();
             // Call listeners
             this.sendEventToListeners(BpmAppReporter.SENT_MESSAGE, null, host);
@@ -309,7 +340,9 @@ public class BpmEngineApplication extends Application {
     }
 
 
-
+    public SimulationApplicationEngine getEngine() {
+        return engine;
+    }
 }
 
 

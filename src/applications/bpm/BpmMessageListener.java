@@ -4,7 +4,7 @@ import core.DTNHost;
 import core.Message;
 import core.MessageListener;
 import ee.mass.epm.SimulationApplicationEngine;
-import ee.mass.epm.sim.SimMessage;
+import ee.mass.epm.sim.message.SimMessage;
 
 /** TODO: consider if there is too much overhead if every node
  *  has its own listener as it is currently implemented.

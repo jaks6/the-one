@@ -1,6 +1,6 @@
 package ee.mass.epm;
 
-import ee.mass.epm.sim.SimMessage;
+import ee.mass.epm.sim.message.SimMessage;
 import org.flowable.engine.common.api.delegate.event.FlowableEventListener;
 import org.flowable.engine.runtime.ProcessInstance;
 
@@ -69,7 +69,6 @@ public interface SimulationApplicationEngine {
      */
     void deploy(String name, InputStream inputStream);
 
-    void deploy(String definitionResource);
 
     int getQueuedSimTasksSize();
 
@@ -79,6 +78,8 @@ public interface SimulationApplicationEngine {
 
     int update();
 
+    int getHostAddress();
+    void setHostAddress(int host);
 
     void activityCancelled(String executionId);
 }
