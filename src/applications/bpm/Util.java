@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static applications.model.AdaptiveMobileApplication.COMBUS_PENDING_FOG_REQS;
+import static applications.fog.AdaptiveMobileApplication.COMBUS_PENDING_FOG_REQS;
 
 public class Util {
     public static HashMap<String, String> PROCESSES =  new HashMap<>();
