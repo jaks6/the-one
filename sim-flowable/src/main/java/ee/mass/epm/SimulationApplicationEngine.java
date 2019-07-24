@@ -1,14 +1,12 @@
 package ee.mass.epm;
 
+import ee.mass.epm.sim.LocationSignalSubscription;
 import ee.mass.epm.sim.message.SimMessage;
 import org.flowable.common.engine.api.delegate.event.FlowableEventListener;
 import org.flowable.engine.runtime.ProcessInstance;
 
 import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 /** Provides basic interaction with BPMN engine, mainly process
  *  deployment, starting and messaging.
@@ -27,6 +25,9 @@ public interface SimulationApplicationEngine {
     /** Simulator fetches messages to send from here */
     Queue<SimMessage> getPendingOutgoingMessages();
 
+    /** Movement-related signals are only sent to processes who have signal
+     * intermediate catches with the LocationSignalSubscription ExecutionListener*/
+    Set<LocationSignalSubscription> getLocationSignalSubscriptions();
 
     /** Get the requests for sending messages that use the adaptive fog model */
     Set<FogMessageRequest> getFogMessageRequests();

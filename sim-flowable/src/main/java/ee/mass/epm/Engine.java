@@ -1,14 +1,15 @@
 package ee.mass.epm;
 
+import ee.mass.epm.sim.LocationSignalSubscription;
 import ee.mass.epm.sim.SimulatedWorkQueue;
 import ee.mass.epm.sim.message.EngineMessageContent;
 import ee.mass.epm.sim.message.SimMessage;
-import org.flowable.common.engine.impl.runtime.Clock;
-import org.flowable.engine.*;
 import org.flowable.common.engine.api.delegate.event.FlowableEvent;
 import org.flowable.common.engine.api.delegate.event.FlowableEventListener;
 import org.flowable.common.engine.api.delegate.event.FlowableEventType;
 import org.flowable.common.engine.impl.history.HistoryLevel;
+import org.flowable.common.engine.impl.runtime.Clock;
+import org.flowable.engine.*;
 import org.flowable.engine.runtime.Execution;
 import org.flowable.engine.runtime.ProcessInstance;
 import org.slf4j.Logger;
@@ -29,6 +30,8 @@ public class Engine implements SimulationApplicationEngine {
     private SimulatedWorkQueue simulatedWorkQueue;
     private Queue<SimMessage> outgoingMessageQueue;
     private Set<FogMessageRequest> fogMessageRequests;
+    private Set<LocationSignalSubscription> locationSignalSubscriptions;
+
     RuntimeService runtimeService;
 
 
@@ -74,12 +77,18 @@ public class Engine implements SimulationApplicationEngine {
         simulatedWorkQueue = ((SimulatedProcessEngineConfiguration)cfg).simulatedWorkQueue;
         outgoingMessageQueue = ((SimulatedProcessEngineConfiguration)cfg).getOutgoingMessages();
         fogMessageRequests = ((SimulatedProcessEngineConfiguration)cfg).getFogMessageRequests();
+        locationSignalSubscriptions = ((SimulatedProcessEngineConfiguration)cfg).getLocationSignalSubscriptions();
 
     }
 
     @Override
     public Queue<SimMessage> getPendingOutgoingMessages() {
         return outgoingMessageQueue;
+    }
+
+    @Override
+    public Set<LocationSignalSubscription> getLocationSignalSubscriptions() {
+        return locationSignalSubscriptions;
     }
 
     @Override

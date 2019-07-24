@@ -3,6 +3,7 @@ package applications.bpm;
 import core.*;
 import ee.mass.epm.Engine;
 import ee.mass.epm.SimulationApplicationEngine;
+import ee.mass.epm.sim.LocationSignalSubscription;
 import ee.mass.epm.sim.message.DeployMessageContent;
 import ee.mass.epm.sim.message.EngineMessageContent;
 import ee.mass.epm.sim.message.OneAppMessageContent;
@@ -28,6 +29,8 @@ public class BpmEngineApplication extends Application {
     public static final String MESSAGE_PROPERTY_OPERATION = "operation";
     private static final int ENERGY_MODIFIER = 1;
     public static final String MESSAGE_PROPERTY_TYPE = "type";
+    private static final String SETTING_TRACK_MOVEMENT = "generateMovementSignals";
+    public static final int LOCATION_SIGNAL_DISTANCE_THRESHOLD = 5;
     private HashMap<String, Object>[] AUTOSTARTED_PROCESS_VARS;
     private String[] AUTO_STARTED_PROCESSES  = new String[]{};
     private String[] AUTO_DEPLOYED_PROCESSES = new String[]{};
@@ -52,6 +55,7 @@ public class BpmEngineApplication extends Application {
     public static final String SIGNAL_NEARBY_DEVICE = "Device Nearby";
     public static final String SIGNAL_DISCONNECTED = "Disconnected";
     public static final String SIGNAL_NEW_DESTINATION = "New Destination";
+    public static final String SIGNAL_LOCATION_UPDATE = "New Coordinate";
 
     public static final String MSG_TYPE_BPM = "bpm_msg";
 
@@ -65,6 +69,9 @@ public class BpmEngineApplication extends Application {
     boolean firstUpdate = true;
     DTNHost mHost;
     private boolean energyTrackingEnabled;
+
+    private boolean movementTrackingEnabled;
+    private boolean movementActiveOnLastUpdate = false;
 
     @Override
     public Message handle(Message msg, DTNHost host) {
@@ -160,6 +167,10 @@ public class BpmEngineApplication extends Application {
             OVERRIDE_MSG_SIZE = s.getInt(SETTING_OVERRIDE_MSG_SIZE);
         }
 
+        if (s.contains(SETTING_TRACK_MOVEMENT)){
+            movementTrackingEnabled = s.getBoolean(SETTING_TRACK_MOVEMENT, false);
+        }
+
         if (s.contains(SETTING_AUTODEPLOYED_PROCESSES))
             AUTO_DEPLOYED_PROCESSES = s.getCsvSetting(SETTING_AUTODEPLOYED_PROCESSES);
         if (s.contains(SETTING_AUTOSTARTED_PROCESSES)){
@@ -199,6 +210,7 @@ public class BpmEngineApplication extends Application {
         this.AUTO_DEPLOYED_PROCESSES = e.AUTO_DEPLOYED_PROCESSES;
         this.AUTO_STARTED_PROCESSES = e.AUTO_STARTED_PROCESSES;
         this.AUTOSTARTED_PROCESS_VARS = e.AUTOSTARTED_PROCESS_VARS;
+        this.movementTrackingEnabled = e.movementTrackingEnabled;
         this.engine = new Engine(String.valueOf(BpmEngineApplication.appIdCounter), OneSimClock.getInstance());
         BpmEngineApplication.appIdCounter++;
     }
@@ -209,6 +221,10 @@ public class BpmEngineApplication extends Application {
     public void update(DTNHost host) {
         if (firstUpdate){ bootstrap(host); }
         else { //TODO: this means that autostarted processes and their tasks are ignored before bootstrap has been finished
+
+            if (movementTrackingEnabled){
+                updateMovement(host);
+            }
             //make engine work on running tasks
             int workDone = engine.update();
 
@@ -219,6 +235,24 @@ public class BpmEngineApplication extends Application {
 
         //take some messages and send them out
         handleOutgoingMessages(host);
+    }
+    // Convert movement updates to signals, if any processes have subscribed via MovementSignalSubscriptionTask
+    private void updateMovement(DTNHost host) {
+        // TODO, only bother with updates if there are any process definitions with subscriptions to movement.. ?
+        if (movementActiveOnLastUpdate ){
+
+
+            for (Iterator<LocationSignalSubscription> i = engine.getLocationSignalSubscriptions().iterator(); i.hasNext();) {
+                LocationSignalSubscription subscription = i.next();
+
+                if (subscription.getCoordinate().distance(host.getLocation()) <= LOCATION_SIGNAL_DISTANCE_THRESHOLD) {
+                    engine.signal(SIGNAL_LOCATION_UPDATE, subscription.getExecutionId());
+                    i.remove();
+                }
+            }
+        }
+
+        movementActiveOnLastUpdate = host.getMovement().isActive();
     }
 
     private void updateEnergy(DTNHost host, int workDone) {
@@ -237,6 +271,7 @@ public class BpmEngineApplication extends Application {
         firstUpdate = false;
         mHost = host;
 
+        movementActiveOnLastUpdate = host.isMovementActive();
         energyTrackingEnabled = ((ActiveRouter) host.getRouter()).getEnergy() != null;
 
         SimScenario.getInstance().addMovementListener(new BpmMovementListener(this));

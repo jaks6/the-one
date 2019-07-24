@@ -1,5 +1,6 @@
 package ee.mass.epm;
 
+import ee.mass.epm.sim.LocationSignalSubscription;
 import ee.mass.epm.sim.SimulatedWorkQueue;
 import ee.mass.epm.sim.message.SimMessage;
 import org.flowable.common.engine.impl.interceptor.Command;
@@ -25,6 +26,7 @@ public class SimulatedProcessEngineConfiguration extends StandaloneProcessEngine
 
         outgoingMessages = new ConcurrentLinkedQueue<>();
         fogMessageRequests = new HashSet<>();
+        locationSignalSubscriptions = new HashSet<>();
 
         setAsyncExecutor(new OneAsyncExecutor());
 
@@ -60,10 +62,8 @@ public class SimulatedProcessEngineConfiguration extends StandaloneProcessEngine
 
     protected SimulatedWorkQueue simulatedWorkQueue;
     private Queue<SimMessage> outgoingMessages;
-
-
-
     private Set<FogMessageRequest> fogMessageRequests;
+    private Set<LocationSignalSubscription> locationSignalSubscriptions;
 
     public SimulatedWorkQueue getSimulatedWorkQueue() {
         return simulatedWorkQueue;
@@ -74,4 +74,8 @@ public class SimulatedProcessEngineConfiguration extends StandaloneProcessEngine
     }
 
     public Set<FogMessageRequest> getFogMessageRequests() { return fogMessageRequests; }
+
+    public Set<LocationSignalSubscription> getLocationSignalSubscriptions() {
+        return locationSignalSubscriptions;
+    }
 }
