@@ -3,7 +3,7 @@ package ee.mass.epm.sim.task;
 import ee.mass.epm.sim.JobHandle;
 import ee.mass.epm.SimulatedProcessEngineConfiguration;
 import org.flowable.bpmn.model.ServiceTask;
-import org.flowable.engine.common.api.delegate.Expression;
+import org.flowable.common.engine.api.delegate.Expression;
 import org.flowable.engine.delegate.DelegateExecution;
 import org.flowable.engine.impl.context.Context;
 import org.flowable.engine.impl.delegate.TriggerableActivityBehavior;
@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
   */
 public class SimulatedTask  extends ServiceTask implements TriggerableActivityBehavior {
 
-    Expression jobSize;
+    Expression work_size;
     Logger log = LoggerFactory.getLogger(this.getClass());
 
 
@@ -26,8 +26,8 @@ public class SimulatedTask  extends ServiceTask implements TriggerableActivityBe
         SimulatedProcessEngineConfiguration engine = (SimulatedProcessEngineConfiguration) Context.getProcessEngineConfiguration();
 
         int jobsize = 0;
-        if (jobSize != null){
-            jobsize = Integer.parseInt( (String) jobSize.getValue(execution) );
+        if (work_size != null){
+            jobsize = Integer.parseInt( (String) work_size.getValue(execution) );
 
         }
 

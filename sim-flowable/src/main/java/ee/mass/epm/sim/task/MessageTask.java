@@ -3,7 +3,7 @@ package ee.mass.epm.sim.task;
 import ee.mass.epm.sim.message.EngineMessageContent;
 import ee.mass.epm.sim.message.SimMessageContent;
 import org.apache.commons.lang3.StringUtils;
-import org.flowable.engine.common.api.delegate.Expression;
+import org.flowable.common.engine.api.delegate.Expression;
 import org.flowable.engine.delegate.DelegateExecution;
 
 // A message targeted to the Flowable Engine.
@@ -11,8 +11,8 @@ public class MessageTask extends AbstractMessageTask {
 
     static final String INCLUDED_PROCESS_VARS_DELIMITER = ",";
 
-    Expression destinationProcessInstanceId;
-    Expression includedProcessVars;
+    Expression target_process_instance_id;
+    Expression included_vars;
 
 
     @Override
@@ -21,20 +21,22 @@ public class MessageTask extends AbstractMessageTask {
         EngineMessageContent msgContent = new EngineMessageContent();
 
         try {
-            String destinationExecutionId = getStringFromFieldExpression(execution, destinationProcessInstanceId);
-            if (destinationExecutionId != null){
-                msgContent.destinationProcessInstanceId = destinationExecutionId;
-            } else {
-                throw new Exception("Destination process instance ID was null!" + execution.getId() );
+            if (target_process_instance_id != null){ //todo should we allow generic messages?
+                String destinationExecutionId = getStringFromFieldExpression(execution, target_process_instance_id);
+                if (destinationExecutionId != null){
+                    msgContent.destinationProcessInstanceId = destinationExecutionId;
+                } else {
+                    throw new Exception("Destination process instance ID was null!" + execution.getId() );
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        msgContent.variables.put(this.msgName + "_execution_id", execution.getId()); // TODO: maybe move to engine-middleware level instead of this task impl.
+        msgContent.variables.put(this.msg_name + "_execution_id", execution.getId()); // TODO: maybe move to engine-middleware level instead of this task impl.
 
-        if (includedProcessVars != null) {
-            String expressionText = includedProcessVars.getExpressionText();
+        if (included_vars != null) {
+            String expressionText = included_vars.getExpressionText();
             String[] varNames = StringUtils.stripAll(expressionText.split(MessageTask.INCLUDED_PROCESS_VARS_DELIMITER));
             msgContent.addProcessVarsFromExecution(execution, varNames);
         }

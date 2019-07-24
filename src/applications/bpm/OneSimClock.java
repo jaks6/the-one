@@ -14,8 +14,8 @@ package applications.bpm;
  */
 
 import core.SimClock;
-import org.flowable.engine.common.impl.runtime.Clock;
-import org.flowable.engine.common.impl.util.TimeZoneUtil;
+import org.flowable.common.engine.impl.runtime.Clock;
+import org.flowable.common.engine.impl.util.TimeZoneUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +27,7 @@ import java.util.TimeZone;
 /**
  * @author Joram Barrez
  */
-public class OneSimClock implements org.flowable.engine.common.impl.runtime.Clock {
+public class OneSimClock implements Clock {
     private static OneSimClock mInstance;
     Logger log = LoggerFactory.getLogger(this.getClass());
 

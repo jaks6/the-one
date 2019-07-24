@@ -15,10 +15,10 @@ public class StartEventMessageTask extends MessageTask {
 
         msgContent.isForStartEvent = true;
 
-        msgContent.variables.put(this.msgName + "_execution_id", execution.getId()); // TODO: maybe move to engine-middleware level instead of this task impl.
+        msgContent.variables.put(this.msg_name + "_execution_id", execution.getId()); // TODO: maybe move to engine-middleware level instead of this task impl.
 
-        if (includedProcessVars != null) {
-            String[] varNames = includedProcessVars.getExpressionText().split(MessageTask.INCLUDED_PROCESS_VARS_DELIMITER);
+        if (included_vars != null) {
+            String[] varNames = included_vars.getExpressionText().split(MessageTask.INCLUDED_PROCESS_VARS_DELIMITER);
             msgContent.addProcessVarsFromExecution(execution, varNames);
         }
         return msgContent;

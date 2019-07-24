@@ -551,4 +551,7 @@ public class DTNHost implements Comparable<DTNHost> {
 		return this.getAddress() - h.getAddress();
 	}
 
+	public MovementModel getMovement() {
+		return movement;
+	}
 }

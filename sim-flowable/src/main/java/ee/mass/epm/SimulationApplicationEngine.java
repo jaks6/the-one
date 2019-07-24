@@ -1,7 +1,7 @@
 package ee.mass.epm;
 
 import ee.mass.epm.sim.message.SimMessage;
-import org.flowable.engine.common.api.delegate.event.FlowableEventListener;
+import org.flowable.common.engine.api.delegate.event.FlowableEventListener;
 import org.flowable.engine.runtime.ProcessInstance;
 
 import java.io.InputStream;

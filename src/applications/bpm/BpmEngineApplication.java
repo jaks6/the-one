@@ -5,6 +5,7 @@ import ee.mass.epm.Engine;
 import ee.mass.epm.SimulationApplicationEngine;
 import ee.mass.epm.sim.message.DeployMessageContent;
 import ee.mass.epm.sim.message.EngineMessageContent;
+import ee.mass.epm.sim.message.OneAppMessageContent;
 import ee.mass.epm.sim.message.SimMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,7 @@ public class BpmEngineApplication extends Application {
     public static final String SIGNAL_NEW_DESTINATION = "New Destination";
 
     public static final String MSG_TYPE_BPM = "bpm_msg";
+
     private static final String SETTING_OVERRIDE_MSG_SIZE = "overrideMsgSize";
 
     public static int OVERRIDE_MSG_SIZE = -1;
@@ -68,9 +70,10 @@ public class BpmEngineApplication extends Application {
     public Message handle(Message msg, DTNHost host) {
         log.debug("Handling Message");
         String type = (String) msg.getProperty(MESSAGE_PROPERTY_TYPE);
-        if (!type.equals(MSG_TYPE_BPM)) return msg;
-        else {
+        if (type != null && type.equals(MSG_TYPE_BPM)) {
             return handleBpmMessage(msg, host);
+        } else {
+            return msg;
         }
     }
 
@@ -302,9 +305,21 @@ public class BpmEngineApplication extends Application {
                 size);
 
         m.addProperty("operation", OPERATION_PROCESS_MESSAGE);
-        m.addProperty("type", MSG_TYPE_BPM);
         m.addProperty(PROPERTY_PROCESS_MSG, simMessage);
-        m.setAppID(APP_ID);
+
+        switch (simMessage.getContent().getMessageContentType()){
+            case ONE_MSG:
+                OneAppMessageContent content = (OneAppMessageContent) simMessage.getContent();
+                m.setAppID(content.appId);
+                break;
+            case DEPLOY_MSG:
+            case ENGINE_MSG:
+                m.addProperty("type", MSG_TYPE_BPM);
+                m.setAppID(APP_ID);
+                break;
+        }
+
+
 
         log.debug("[BPH-" + host + "] Sent: "+ simMessage );
         return m;
